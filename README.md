@@ -105,13 +105,22 @@ Notes on the computation:
 - Rename detection is enabled at a **50% threshold** (`-M50%`), so a pure rename does not change
   an object's metrics; deleted files are recorded as line removals on their old path.
 - **Binary files are excluded** (git's numstat reports `-`).
-- Commit sets can be the full history, a time window (`from` inclusive, `to` exclusive), or a
-  manually selected list of commit hashes.
+- Commit sets can be the full history, an inclusive time window (`from`/`to` Unix timestamps), or
+  a manually selected list of commit hashes.
 
 ### Validation
 
-`reference-data/` contains expected metric values provided for the three test repositories
-(cJSON, Redis, git) at specific reference SHAs. These can be used to verify the engine's output:
+`reference-data/` contains expected metric values for cJSON, Redis, and Git at specific reference
+SHAs. The primary cJSON baseline at `6d9f2443ab07` contains 955 non-merge commits and expects
+46,377 added lines, 11,211 removed lines, 35,166 growth, and 57,588 churn. Run the automated
+reference check with:
+
+```bash
+cd backend
+python engine/test_engine.py
+```
+
+You can also inspect metrics through the API:
 
 ```bash
 curl "http://localhost:5000/api/repos/<repo-id>/metrics"

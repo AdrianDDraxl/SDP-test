@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import type { MetricsResult, AuthorInfo, CommitInfo, TreeEntry, MetricParams } from '../types';
+import { defaultFilters } from '../types';
+import type { MetricsResult, AuthorInfo, CommitInfo, TreeEntry, MetricParams, Filters } from '../types';
 import { api, getErrorMessage } from '../services/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorBanner from '../components/ErrorBanner';
-import FilterBar, { type Filters, defaultFilters } from '../components/FilterBar';
+import FilterBar from '../components/FilterBar';
 import SummaryCards from '../components/SummaryCards';
 import ChurnOverTime from '../components/charts/ChurnOverTime';
 import TopFilesByChurn from '../components/charts/TopFilesByChurn';
@@ -105,14 +106,14 @@ export default function DashboardPage() {
 
           {/* Charts grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            <ChurnOverTime commits={commits} />
+            <ChurnOverTime data={metrics.timeline} />
             <TopFilesByChurn files={metrics.files} />
             <DirectoryBreakdown directories={metrics.directories} />
             <AuthorOwnership authors={metrics.authors} />
           </div>
 
           <div className="mb-6">
-            <GrowthOverTime commits={commits} />
+            <GrowthOverTime data={metrics.timeline} />
           </div>
 
           {/* Tables */}

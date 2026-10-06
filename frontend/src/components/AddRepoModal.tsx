@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Link as LinkIcon, Upload, Loader2 } from 'lucide-react';
+import { getErrorMessage } from '../services/api';
 
 interface Props {
   open: boolean;
@@ -13,15 +14,23 @@ export default function AddRepoModal({ open, onClose, onClone, onUpload }: Props
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setError('');
+  }, [open]);
 
   const handleClone = async () => {
     if (!url.trim()) return;
     setLoading(true);
+    setError('');
     try {
       await onClone(url.trim());
       setUrl('');
       onClose();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Failed to clone repository.'));
     } finally {
       setLoading(false);
     }
@@ -29,9 +38,12 @@ export default function AddRepoModal({ open, onClose, onClone, onUpload }: Props
 
   const handleFile = useCallback(async (file: File) => {
     setLoading(true);
+    setError('');
     try {
       await onUpload(file);
       onClose();
+    } catch (requestError) {
+      setError(getErrorMessage(requestError, 'Failed to upload repository.'));
     } finally {
       setLoading(false);
     }
@@ -85,6 +97,11 @@ export default function AddRepoModal({ open, onClose, onClone, onUpload }: Props
 
         {/* Content */}
         <div className="p-6">
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           {tab === 'clone' ? (
             <div className="space-y-4">
               <div>

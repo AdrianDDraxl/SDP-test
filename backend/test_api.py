@@ -85,6 +85,7 @@ class ApiTestCase(unittest.TestCase):
         repositories = self.client.get("/api/repos").get_json()
         self.assertEqual(len(repositories), 1)
         self.assertEqual(repositories[0]["id"], repo_id)
+        self.assertIn("created_at", repositories[0])
         self.assertNotIn("path", repositories[0])
 
         commits = self.client.get(f"/api/repos/{repo_id}/commits")
@@ -101,6 +102,24 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(metrics.status_code, 200)
         self.assertIn("summary", metrics.get_json())
         self.assertIsInstance(metrics.get_json()["commits_used"], int)
+
+        commit = commits.get_json()[0]
+        filtered_metrics = self.client.get(
+            f"/api/repos/{repo_id}/metrics",
+            query_string={
+                "path": "README.md",
+                "author": commit["author_email"],
+                "from": commit["date"],
+                "to": commit["date"],
+                "commits": commit["hash"],
+            },
+        )
+        self.assertEqual(filtered_metrics.status_code, 200)
+        filtered_data = filtered_metrics.get_json()
+        self.assertEqual(filtered_data["commits_used"], 1)
+        self.assertEqual(filtered_data["summary"]["added_lines"], 1)
+        self.assertEqual(len(filtered_data["timeline"]), 1)
+        self.assertEqual(filtered_data["timeline"][0]["added_lines"], 1)
 
         self.assertEqual(
             self.client.delete(f"/api/repos/{repo_id}").get_json(), {"ok": True}

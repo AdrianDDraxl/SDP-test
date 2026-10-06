@@ -332,6 +332,7 @@ class GitAnalyzer:
             ]
 
         records = []
+        timeline = []
         for commit in commits:
             name, email = self._author_merger.resolve(
                 commit.author_name, commit.author_email
@@ -340,13 +341,25 @@ class GitAnalyzer:
                 self._get_diff(commit.hash), selected_path
             )
             records.append((name, email, changes))
+            timeline.append(
+                {
+                    "hash": commit.hash,
+                    "date": commit.date,
+                    "added_lines": sum(change["added_lines"] for change in changes.values()),
+                    "removed_lines": sum(change["removed_lines"] for change in changes.values()),
+                    "growth": sum(change["growth"] for change in changes.values()),
+                    "churn": sum(change["churn"] for change in changes.values()),
+                }
+            )
 
+        timeline.sort(key=lambda point: (point["date"], point["hash"]))
         summary, files, directories, authors = aggregate_metrics(records, len(commits))
         return MetricsResult(
             summary=summary,
             files=files,
             directories=directories,
             authors=authors,
+            timeline=timeline,
             commits_used=len(commits),
         )
 

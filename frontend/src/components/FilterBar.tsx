@@ -1,16 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Filter, ChevronDown, Check, Search } from 'lucide-react';
-import type { AuthorInfo, CommitInfo, TreeEntry } from '../types';
+import type { AuthorInfo, CommitInfo, TreeEntry, Filters } from '../types';
 import { fmtDate } from '../utils';
-
-export interface Filters {
-  authors: string[];
-  fromDate: string;
-  toDate: string;
-  commitMode: 'range' | 'manual';
-  selectedCommits: string[];
-  pathFilter: string;
-}
 
 interface Props {
   authors: AuthorInfo[];
@@ -20,15 +11,6 @@ interface Props {
   onChange: (f: Filters) => void;
   onApply: () => void;
 }
-
-export const defaultFilters: Filters = {
-  authors: [],
-  fromDate: '',
-  toDate: '',
-  commitMode: 'range',
-  selectedCommits: [],
-  pathFilter: '',
-};
 
 export default function FilterBar({ authors, commits, tree, filters, onChange, onApply }: Props) {
   const [authorOpen, setAuthorOpen] = useState(false);

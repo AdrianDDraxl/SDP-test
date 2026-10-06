@@ -9,6 +9,8 @@
 set -u
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_PID=""
+FRONTEND_PID=""
 
 # ---------- pick a Python interpreter ----------
 if command -v python3 >/dev/null 2>&1; then
@@ -29,13 +31,12 @@ fi
 cleanup() {
   echo
   echo "==> Shutting down RAT..."
-  [ -n "${BACKEND_PID:-}" ] && kill "$BACKEND_PID" 2>/dev/null || true
-  [ -n "${FRONTEND_PID:-}" ] && kill "$FRONTEND_PID" 2>/dev/null || true
+  [ -n "$FRONTEND_PID" ] && kill "$FRONTEND_PID" 2>/dev/null || true
+  [ -n "$BACKEND_PID" ] && kill "$BACKEND_PID" 2>/dev/null || true
   wait 2>/dev/null || true
   echo "==> Stopped."
-  exit 0
 }
-trap cleanup INT TERM
+trap cleanup EXIT INT TERM
 
 # ---------- backend ----------
 echo "==> Checking backend dependencies..."
@@ -52,10 +53,10 @@ BACKEND_PID=$!
 
 # ---------- frontend ----------
 echo "==> Installing frontend dependencies (npm install)..."
-(cd "$ROOT_DIR/frontend" && npm install --no-fund --no-audit)
+npm install --prefix "$ROOT_DIR/frontend" --no-fund --no-audit
 
 echo "==> Starting frontend on http://localhost:3000 ..."
-(cd "$ROOT_DIR/frontend" && npm run dev) &
+npm run dev --prefix "$ROOT_DIR/frontend" &
 FRONTEND_PID=$!
 
 echo

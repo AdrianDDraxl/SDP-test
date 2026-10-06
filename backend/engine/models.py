@@ -49,6 +49,7 @@ class MetricsResult:
     files: list[dict[str, Any]]
     directories: list[dict[str, Any]]
     authors: list[dict[str, Any]]
+    timeline: list[dict[str, Any]]
     commits_used: int
 
     def to_dict(self) -> dict[str, Any]:

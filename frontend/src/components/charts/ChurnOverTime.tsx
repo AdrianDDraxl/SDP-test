@@ -1,19 +1,12 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { CommitInfo } from '../../types';
+import type { MetricTimelinePoint } from '../../types';
 import { fmtDate } from '../../utils';
 
 interface Props {
-  commits: CommitInfo[];
-  /** Per-commit churn data – if not provided we synthesize from commit dates */
-  churnData?: { date: number; churn: number }[];
+  data: MetricTimelinePoint[];
 }
 
-export default function ChurnOverTime({ commits, churnData }: Props) {
-  const data = churnData ??
-    commits.map((c, i) => ({
-      date: c.date,
-      churn: Math.round(80 + Math.sin(i * 0.4) * 60 + Math.random() * 40),
-    }));
+export default function ChurnOverTime({ data }: Props) {
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">

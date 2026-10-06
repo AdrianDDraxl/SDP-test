@@ -38,6 +38,24 @@ export interface MetricParams {
   commits?: string; // comma-separated hashes
 }
 
+export interface Filters {
+  authors: string[];
+  fromDate: string;
+  toDate: string;
+  commitMode: 'range' | 'manual';
+  selectedCommits: string[];
+  pathFilter: string;
+}
+
+export const defaultFilters: Filters = {
+  authors: [],
+  fromDate: '',
+  toDate: '',
+  commitMode: 'range',
+  selectedCommits: [],
+  pathFilter: '',
+};
+
 export interface MetricsSummary {
   added_lines: number;
   removed_lines: number;
@@ -78,11 +96,21 @@ export interface AuthorMetric {
   ownership: number; // 0-1 fraction
 }
 
+export interface MetricTimelinePoint {
+  hash: string;
+  date: number;
+  added_lines: number;
+  removed_lines: number;
+  growth: number;
+  churn: number;
+}
+
 export interface MetricsResult {
   summary: MetricsSummary;
   files: FileMetric[];
   directories: DirectoryMetric[];
   authors: AuthorMetric[];
+  timeline: MetricTimelinePoint[];
   commits_used: number;
 }
 
