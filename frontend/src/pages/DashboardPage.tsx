@@ -30,8 +30,13 @@ const DIR_COLS = [...FILE_COLS];
 const AUTHOR_COLS = [
   { key: 'name', label: 'Name', type: 'string' as const },
   { key: 'email', label: 'Email', type: 'string' as const },
-  { key: 'modifications', label: 'Mods', type: 'number' as const },
+  { key: 'added_lines', label: 'Added', type: 'number' as const },
+  { key: 'removed_lines', label: 'Removed', type: 'number' as const },
+  { key: 'growth', label: 'Growth', type: 'number' as const },
   { key: 'churn', label: 'Churn', type: 'number' as const },
+  { key: 'modifications', label: 'Mods', type: 'number' as const },
+  { key: 'mod_frequency', label: 'Mod Freq', type: 'number' as const },
+  { key: 'churn_rate', label: 'Churn Rate', type: 'number' as const },
   { key: 'ownership', label: 'Ownership', type: 'percent' as const },
 ];
 

@@ -62,9 +62,7 @@ def aggregate_metrics(
     """
     file_totals: dict[str, dict[str, int]] = defaultdict(_empty_totals)
     directory_totals: dict[str, dict[str, int]] = defaultdict(_empty_totals)
-    author_totals: dict[tuple[str, str], dict[str, int]] = defaultdict(
-        lambda: {"modifications": 0, "churn": 0}
-    )
+    author_totals: dict[tuple[str, str], dict[str, int]] = defaultdict(_empty_totals)
 
     # The root exists even when no selected commit contains a text-file change.
     directory_totals[""]
@@ -90,7 +88,8 @@ def aggregate_metrics(
         root_change = commit_directories.get("")
         if root_change and root_change["churn"] > 0:
             author_totals[author_key]["modifications"] += 1
-            author_totals[author_key]["churn"] += root_change["churn"]
+        if root_change:
+            _add_change(author_totals[author_key], root_change)
 
     files = [
         _finalize(path, totals, commit_count)
@@ -107,14 +106,10 @@ def aggregate_metrics(
     for (name, email), totals in sorted(
         author_totals.items(), key=lambda item: (item[0][0].casefold(), item[0][1].casefold())
     ):
-        authors.append(
-            {
-                "name": name,
-                "email": email,
-                "modifications": totals["modifications"],
-                "churn": totals["churn"],
-                "ownership": totals["churn"] / total_churn if total_churn else 0.0,
-            }
-        )
+        author_entry = _finalize(None, totals, commit_count)
+        author_entry["name"] = name
+        author_entry["email"] = email
+        author_entry["ownership"] = totals["churn"] / total_churn if total_churn else 0.0
+        authors.append(author_entry)
 
     return summary, files, directories, authors

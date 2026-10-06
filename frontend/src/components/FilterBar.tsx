@@ -154,6 +154,12 @@ export default function FilterBar({ authors, commits, tree, filters, onChange, o
           </button>
         </div>
         <button
+          onClick={() => onChange({ authors: [], fromDate: '', toDate: '', commitMode: 'range', selectedCommits: [], pathFilter: '' })}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          Reset
+        </button>
+        <button
           onClick={onApply}
           className="ml-auto rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
         >
