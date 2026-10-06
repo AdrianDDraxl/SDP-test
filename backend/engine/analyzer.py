@@ -360,8 +360,14 @@ class GitAnalyzer:
                 }
             )
 
+        # Collect tree paths (H[F]) from every selected commit and its parent
+        # so that files with zero measured changes still appear in the output.
+        tree_paths = self._collect_tree_paths(commits, selected_path)
+
         timeline.sort(key=lambda point: (point["date"], point["hash"]))
-        summary, files, directories, authors = aggregate_metrics(records, len(commits))
+        summary, files, directories, authors = aggregate_metrics(
+            records, len(commits), tree_paths,
+        )
         return MetricsResult(
             summary=summary,
             files=files,
@@ -378,3 +384,86 @@ class GitAnalyzer:
     def get_author_groups(self) -> list[list[dict]]:
         """Get a defensive copy of the manual author merge groups."""
         return self._author_merger.get_groups()
+
+    # ------------------------------------------------------------------
+    # Tree enumeration for H[F] / H[D]
+    # ------------------------------------------------------------------
+
+    def _list_tree_files(self, tree_ish: str) -> set[str]:
+        """Return the set of blob (file) paths in the tree of *tree_ish*."""
+        output = self._run_git(
+            "ls-tree", "-r", "--name-only", "-z", tree_ish,
+            allow_failure=True,
+        )
+        if not output:
+            return set()
+        return {p for p in output.split("\x00") if p}
+
+    def _collect_tree_paths(
+        self, commits: list[CommitInfo], selected_path: str | None,
+    ) -> set[str]:
+        """Union of file paths visible in tree(c) and tree(parent(c)) for
+        every selected commit *c*, filtered by *selected_path*.
+
+        This ensures objects with zero measured changes are included in H[F]/H[D].
+        """
+        if not commits:
+            return set()
+
+        all_raw = self._load_raw_commits()
+        is_full_set = len(commits) == len(all_raw)
+
+        if is_full_set:
+            # Optimisation: for the full commit history the union of every
+            # tree equals HEAD's tree plus paths from diff cache (which
+            # covers files that were later deleted).
+            head_hash = self._run_git(
+                "rev-parse", "--verify", "HEAD", allow_failure=True
+            ).strip()
+            all_paths = self._list_tree_files(head_hash) if head_hash else set()
+            # Add diff-cached paths (includes files deleted along the way).
+            for cached_changes in self._diff_cache.values():
+                all_paths |= cached_changes.keys()
+        else:
+            # Filtered set: enumerate the boundary trees only.
+            tree_ishes: set[str] = set()
+            for commit in commits:
+                tree_ishes.add(commit.hash)
+                parent = self._parent_cache.get(commit.hash)
+                if parent and parent != EMPTY_TREE_HASH:
+                    tree_ishes.add(parent)
+
+            # Cap at a reasonable number to avoid spawning too many processes.
+            if len(tree_ishes) > 200:
+                # Fall back to first-parent + last-commit trees.
+                sorted_commits = sorted(commits, key=lambda c: c.date)
+                tree_ishes = set()
+                tree_ishes.add(sorted_commits[0].hash)
+                tree_ishes.add(sorted_commits[-1].hash)
+                first_parent = self._parent_cache.get(sorted_commits[0].hash)
+                if first_parent and first_parent != EMPTY_TREE_HASH:
+                    tree_ishes.add(first_parent)
+                # Also include diff-cache file paths for completeness.
+                for commit in commits:
+                    cached = self._diff_cache.get(commit.hash)
+                    if cached:
+                        tree_ishes_extra = cached.keys()
+
+            all_paths: set[str] = set()
+            for tree_ish in tree_ishes:
+                all_paths |= self._list_tree_files(tree_ish)
+            # Also include all paths from diffs (always correct).
+            for commit in commits:
+                cached = self._diff_cache.get(commit.hash)
+                if cached:
+                    all_paths |= cached.keys()
+
+        # Apply the same path filter used for diff changes.
+        if selected_path is not None:
+            prefix = f"{selected_path}/"
+            all_paths = {
+                p for p in all_paths
+                if p == selected_path or p.startswith(prefix)
+            }
+
+        return all_paths

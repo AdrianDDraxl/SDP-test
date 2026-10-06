@@ -52,6 +52,7 @@ def aggregate_metrics(
         tuple[str, str, Mapping[str, Mapping[str, int]]]
     ],
     commit_count: int,
+    tree_paths: set[str] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """Aggregate per-commit file changes into file, directory, and author metrics.
 
@@ -90,6 +91,14 @@ def aggregate_metrics(
             author_totals[author_key]["modifications"] += 1
         if root_change:
             _add_change(author_totals[author_key], root_change)
+
+    # Ensure every path from the commit trees appears in file/directory totals
+    # even when it had zero measured changes (H[F] / H[D] completeness).
+    if tree_paths:
+        for path in tree_paths:
+            file_totals[path]           # creates zero entry if missing
+            for directory in _directory_paths(path):
+                directory_totals[directory]  # creates zero entry if missing
 
     files = [
         _finalize(path, totals, commit_count)
