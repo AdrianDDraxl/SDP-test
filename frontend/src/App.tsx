@@ -1,11 +1,17 @@
-function App() {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <h1 className="text-3xl font-bold text-gray-800">
-        RAT - Repo Analysis Tool
-      </h1>
-    </div>
-  )
-}
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import AuthorMergePage from './pages/AuthorMergePage';
 
-export default App
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/repo/:id" element={<DashboardPage />} />
+        <Route path="/repo/:id/authors" element={<AuthorMergePage />} />
+      </Route>
+    </Routes>
+  );
+}

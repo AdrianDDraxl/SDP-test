@@ -1,1 +1,5 @@
-# Backend services - Stream 2 implements this
+"""Backend service layer."""
+
+from .repo_manager import RepositoryManager
+
+__all__ = ["RepositoryManager"]
