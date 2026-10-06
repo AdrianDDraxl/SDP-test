@@ -28,6 +28,12 @@ def _get_analyzer(repo_id):
         analyzer = analyzers.get(repo_id)
         if analyzer is None:
             analyzer = GitAnalyzer(repository["path"])
+            saved_groups = repository.get("author_groups")
+            if saved_groups:
+                try:
+                    analyzer.set_author_groups(saved_groups)
+                except (TypeError, ValueError):
+                    pass  # ignore invalid persisted groups
             analyzers[repo_id] = analyzer
     return analyzer
 
@@ -50,6 +56,16 @@ def _parse_commits():
     if not commits:
         raise ValueError("Query parameter 'commits' must contain at least one hash")
     return commits
+
+
+def _parse_authors():
+    raw_value = request.args.get("author")
+    if raw_value in (None, ""):
+        return None
+    authors = [author.strip() for author in raw_value.split(",") if author.strip()]
+    if not authors:
+        raise ValueError("Query parameter 'author' must contain at least one value")
+    return authors
 
 
 def _to_jsonable(value):
@@ -110,7 +126,7 @@ def get_metrics(repo_id):
             raise ValueError("Query parameter 'from' cannot be greater than 'to'")
         return _get_analyzer(repo_id).compute_metrics(
             path=request.args.get("path") or None,
-            author=request.args.get("author") or None,
+            author=_parse_authors(),
             from_ts=from_ts,
             to_ts=to_ts,
             commit_hashes=_parse_commits(),
@@ -134,6 +150,7 @@ def set_author_groups(repo_id):
     try:
         groups = _validate_author_groups(payload["groups"])
         _get_analyzer(repo_id).set_author_groups(groups)
+        _manager().update_author_groups(repo_id, groups)
     except RepositoryNotFound as error:
         return jsonify({"error": str(error)}), 404
     except (TypeError, ValueError) as error:

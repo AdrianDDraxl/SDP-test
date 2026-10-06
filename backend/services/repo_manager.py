@@ -66,6 +66,17 @@ class RepositoryManager:
             raise RepositoryNotFound("Repository files are missing")
         return dict(repository)
 
+    def update_author_groups(self, repo_id: str, groups: list) -> None:
+        """Persist manual author merge groups for a repository."""
+        self._validate_id(repo_id)
+        with self._lock:
+            metadata = self._read_metadata()
+            repository = metadata.get(repo_id)
+            if repository is None:
+                raise RepositoryNotFound("Repository not found")
+            repository["author_groups"] = groups
+            self._write_metadata(metadata)
+
     def clone_repository(self, url: str) -> dict:
         """Synchronously clone a remote git repository and register it."""
         normalized_url = self._validate_clone_url(url)

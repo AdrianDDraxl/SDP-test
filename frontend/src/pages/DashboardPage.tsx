@@ -74,7 +74,8 @@ export default function DashboardPage() {
 
   const applyFilters = () => {
     const params: MetricParams = {};
-    if (filters.authors.length === 1) params.author = filters.authors[0];
+    // Comma-separated emails; backend treats multiple authors as a union filter.
+    if (filters.authors.length > 0) params.author = filters.authors.join(',');
     if (filters.pathFilter) params.path = filters.pathFilter;
     if (filters.commitMode === 'range') {
       if (filters.fromDate) params.from = Math.floor(new Date(filters.fromDate).getTime() / 1000);

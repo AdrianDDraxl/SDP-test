@@ -316,14 +316,22 @@ class GitAnalyzer:
         commits = self._select_raw_commits(from_ts, to_ts, commit_hashes)
 
         if author is not None:
-            if not isinstance(author, str):
-                raise ValueError("author must be a name or email string")
-            author_filter = author.strip().casefold()
+            if isinstance(author, str):
+                requested_authors = [author]
+            elif isinstance(author, (list, tuple, set)):
+                requested_authors = list(author)
+            else:
+                raise ValueError("author must be a name or email string, or a list of them")
+            if not all(isinstance(value, str) for value in requested_authors):
+                raise ValueError("author entries must be name or email strings")
+            author_filters = {
+                value.strip().casefold() for value in requested_authors if value.strip()
+            }
             commits = [
                 commit
                 for commit in commits
-                if author_filter
-                in {
+                if author_filters
+                & {
                     value.casefold()
                     for value in self._author_merger.resolve(
                         commit.author_name, commit.author_email
