@@ -78,7 +78,8 @@ export default function DashboardPage() {
     if (filters.pathFilter) params.path = filters.pathFilter;
     if (filters.commitMode === 'range') {
       if (filters.fromDate) params.from = Math.floor(new Date(filters.fromDate).getTime() / 1000);
-      if (filters.toDate) params.to = Math.floor(new Date(filters.toDate).getTime() / 1000);
+      // Backend treats `to` as exclusive; add one day so the selected end date is fully included.
+      if (filters.toDate) params.to = Math.floor(new Date(filters.toDate).getTime() / 1000) + 86400;
     } else {
       if (filters.selectedCommits.length > 0) params.commits = filters.selectedCommits.join(',');
     }

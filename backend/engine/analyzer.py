@@ -70,7 +70,7 @@ class GitAnalyzer:
         output = self._run_git(
             "log",
             "--no-merges",
-            "--format=%H%x00%an%x00%ae%x00%at%x00%P%x00%s%x1e",
+            "--format=%H%x00%an%x00%ae%x00%ct%x00%P%x00%s%x1e",
             "HEAD",
         )
         commits: list[CommitInfo] = []
@@ -138,7 +138,7 @@ class GitAnalyzer:
             for commit in commits
             if (requested is None or commit.hash in requested)
             and (lower is None or commit.date >= lower)
-            and (upper is None or commit.date <= upper)
+            and (upper is None or commit.date < upper)
         ]
 
     def get_commits(
